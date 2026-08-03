@@ -13,8 +13,13 @@ export class AuthService {
         }
 
         const user = await this.usersService.createUser(email, password);
-        const {password: _, ...userWithoutPassword} = user;
-
-        return userWithoutPassword;
+        if(!user) {
+            const status = "user not created";
+            return { status };
+        }else {
+            const {password: _, id: __, ...userWithoutPassword} = user;
+            const status = "user created";
+            return { status, user: userWithoutPassword };
+        }
     }
 }
