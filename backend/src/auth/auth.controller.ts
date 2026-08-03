@@ -5,6 +5,7 @@ import type { RegisterDto } from './dto/register.dto';
 import { registerSchema } from './dto/register.dto';
 import type { LoginDto } from './dto/login.dto';
 import { loginSchema } from './dto/login.dto';
+import { refreshSchema, type RefreshDto } from './dto/refresh.dto';
 
 
 @Controller('auth')
@@ -22,4 +23,10 @@ export class AuthController {
     async login(@Body() body: LoginDto) {
         return this.authService.login(body.email, body.password);
     }
+
+    @Post('refresh')
+    @UsePipes(new ZodValidationPipe(refreshSchema))
+    async refresh(@Body() body: RefreshDto) {
+        return this.authService.refreshAccessToken(body.refreshToken);
+    }   
 }

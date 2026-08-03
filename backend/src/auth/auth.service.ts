@@ -1,12 +1,13 @@
 
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { TokensService } from './tokens.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-    constructor(private readonly usersService: UsersService, private readonly jwtService: JwtService) {}
+    constructor(private readonly usersService: UsersService, private readonly tokensService: TokensService, private readonly jwtService: JwtService) {}
 
     async register(email: string, password: string) {
         const hasUser = await this.usersService.findUserByEmail(email);
@@ -39,10 +40,19 @@ export class AuthService {
             throw new UnauthorizedException('Invalid credentials');
         }
 
-        const payload = { email: user.email, sub: user.id };
-        console.log(payload);
-        const accessToken = await this.jwtService.signAsync(payload);
-        return { accessToken };
+        const accessToken = await this.jwtService.signAsync({ sub: user.id });
+        const refreshToken = await this.tokensService.signRefreshToken(user.id);
+        return { accessToken, refreshToken };
 
+    }
+
+    async refreshAccessToken(refreshToken: string) {
+        try {
+            const payload = await this.tokensService.verifyRefreshToken(refreshToken);
+            const accessToken = await this.jwtService.signAsync({ sub: payload.sub });
+            return { accessToken };
+        } catch (error) {
+            throw new UnauthorizedException('Invalid refresh token or expired');
+        }
     }
 }
