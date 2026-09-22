@@ -7,6 +7,7 @@ import type { LoginDto } from './dto/login.dto';
 import { loginSchema } from './dto/login.dto';
 import { refreshSchema, type RefreshDto } from './dto/refresh.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { Throttle } from '@nestjs/throttler';
 
 
 
@@ -17,12 +18,14 @@ export class AuthController {
     ) {}
 
     @Post('register')
+    @Throttle({ default: { limit: 5, ttl: 60000 } })
     @UsePipes(new ZodValidationPipe(registerSchema))
     async register(@Body() body: RegisterDto) {
         return this.authService.register(body.email, body.password);
     }
 
     @Post('login')
+    @Throttle({ default: { limit: 5, ttl: 60000 } })
     @UsePipes(new ZodValidationPipe(loginSchema))
     async login(@Body() body: LoginDto) {
         return this.authService.login(body.email, body.password);
