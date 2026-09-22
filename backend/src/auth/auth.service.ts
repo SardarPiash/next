@@ -4,10 +4,16 @@ import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { TokensService } from './tokens.service';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
-    constructor(private readonly usersService: UsersService, private readonly tokensService: TokensService, private readonly jwtService: JwtService) {}
+    constructor(
+        private readonly usersService: UsersService,
+        private readonly tokensService: TokensService,
+        private readonly jwtService: JwtService,
+        private readonly prisma: PrismaService,
+    ) {}
 
     async register(email: string, password: string) {
         const hasUser = await this.usersService.findUserByEmail(email);
@@ -42,6 +48,15 @@ export class AuthService {
 
         const accessToken = await this.jwtService.signAsync({ sub: user.id });
         const refreshToken = await this.tokensService.signRefreshToken(user.id);
+
+        await this.prisma.refreshToken.create({
+            data: {
+                userId: user.id,
+                hashedToken: this.tokensService.hashedToken(refreshToken),
+                expireAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            },
+        });
+        
         return { accessToken, refreshToken };
 
     }

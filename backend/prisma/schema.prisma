@@ -14,7 +14,18 @@ datasource db {
 }
 
 model User {
-  id        String  @id @default(cuid())
-  email     String  @unique
-  password  String 
+  id              String  @id @default(cuid())
+  email           String  @unique
+  password        String 
+  refreshToken    RefreshToken[]
+}
+
+model RefreshToken {
+  id                String @id @default(cuid())
+  hashedToken       String @unique
+  userId            String
+  user              User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expireAt          DateTime
+  revoked           Boolean @default(false)
+  createAt          DateTime @default(now())
 }

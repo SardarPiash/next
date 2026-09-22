@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
+import {createHash} from 'crypto';
 
 
 @Injectable()
@@ -19,6 +20,10 @@ export class TokensService {
         return this.jwtService.verifyAsync(refreshToken, {
             secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
         });
+    }
+
+    hashedToken(token: string): string {
+        return createHash('sha256').update(token).digest('hex');
     }
 
 }
